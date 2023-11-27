@@ -8,3 +8,9 @@ Do not forget to install dependencies with:
 ```
 npm install
 ```
+
+## Static Site Generator (Node.js)
+
+```shell
+npm run build.server
+```

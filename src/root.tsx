@@ -1,20 +1,43 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal, useVisibleTask$} from "@builder.io/qwik";
 import {
   QwikCityProvider,
-  RouterOutlet,
-  ServiceWorkerRegister,
 } from "@builder.io/qwik-city";
 import { RouterHead } from "./components/router-head/router-head";
 
 import "./global.css";
+import { ChartTypeRegistry } from "chart.js";
+import ChartGraph from "./components/chart/chart";
 
 export default component$(() => {
-  /**
-   * The root of a QwikCity site always start with the <QwikCityProvider> component,
-   * immediately followed by the document's <head> and <body>.
-   *
-   * Don't remove the `<head>` and `<body>` elements.
-   */
+
+  interface ChartProps {
+    labels: string[];
+    label: string;
+    chartType: keyof ChartTypeRegistry;
+    data: number[]
+  }
+  
+  const chartProps = useSignal({
+    labels: ["Label", "Label", "Label", "Label", "Label", "Label"],
+    label: "Chart Label",
+    chartType: "bar" as keyof ChartTypeRegistry,
+    data: [12, 19, 3, 5, 2, 3],
+  });
+
+  useVisibleTask$(async ()=>{
+    await fetch("test.json")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Erro na requisição: ${response.statusText}`
+          );
+        }
+        return response.json() as Promise<ChartProps>;
+      })
+      .then((response) => {
+        chartProps.value = response
+    });
+  })
 
   return (
     <QwikCityProvider>
@@ -24,8 +47,7 @@ export default component$(() => {
         <RouterHead />
       </head>
       <body lang="en">
-        <RouterOutlet />
-        <ServiceWorkerRegister />
+        <ChartGraph {...chartProps.value} toTrack={chartProps} className="chart" />
       </body>
     </QwikCityProvider>
   );

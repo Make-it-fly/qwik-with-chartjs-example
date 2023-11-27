@@ -1,0 +1,6 @@
+{
+    "labels" : ["Label 1", "Label 2", "Label 3", "Label 4", "Label 5", "Label 6"],
+    "label" : "Chart Label",
+    "data": [12, 19, 3, 5, 2, 3],
+    "chartType" : "bar"
+}

@@ -1,46 +1,69 @@
-import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { Signal, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { ChartTypeRegistry, registerables } from "chart.js";
 import { Chart } from "chart.js";
 
 interface props {
-    labels: string[],
-    label: string,
-    data: number[]
-    chartType: keyof ChartTypeRegistry,
-    datasets?: any,
-    options?: any
+  id?: string;
+  className?: string;
+	labels: string[];
+	label: string;
+	data: number[];
+	chartType: keyof ChartTypeRegistry;
+	datasets?: any;
+	options?: any;
+  toTrack?: Signal
 }
 
-export const ChartGraph = component$<props>(({label, labels, data, chartType, datasets={}, options={}}) => {
-    const myChart  = useSignal<HTMLCanvasElement>();
+const destroyExistingChartsOnCanvas = (canvas: HTMLCanvasElement | undefined) => {
+  if (canvas) {
+    const chartInstance = Chart.getChart(canvas);
+    if (chartInstance) chartInstance.destroy();
+  }
+}
 
-  
-    useVisibleTask$(() => {
-      if (myChart?.value) {
-        Chart.register(...registerables);
-        new Chart(myChart.value, {
-          type: chartType,
-          data: {
-            labels: labels,
-            datasets: [{
-              label: label,
-              data: data,
-              borderWidth: 1,
-              ...datasets
-            }]
-          },
-          options: {
-            ...options
-          }
-        });
+export const ChartGraph = component$<props>(
+	({ label, labels, data, chartType, datasets = {}, options = {}, id = "test", className = "chart", toTrack}) => {
+		const canvas = useSignal<HTMLCanvasElement>();
+
+		useVisibleTask$(({track}) => {
+      if (toTrack) {
+        track(toTrack)
       }
-    });
-  
-    return (
-      <div>
-        <canvas ref={myChart} id="myChart" class="chart"></canvas>
-      </div>
-    );
-  });
+      
+      
+      if (canvas?.value) {
+          destroyExistingChartsOnCanvas(canvas.value)
+          
+          Chart.register(...registerables);
+          const thisChart = new Chart(canvas.value, {
+            type: chartType,
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: label,
+                  data: data,
+                  borderWidth: 1,
+                  ...datasets,
+                },
+              ],
+            },
+            options: {
+              ...options,
+              onClick: (e) => {
+                console.log("clicou")
+              }
+            },
+          });
+        }
 
-  export default ChartGraph
+      });
+		return (
+			<div>
+				<canvas ref={canvas} id={id} class={className}></canvas>
+			</div>
+		);
+	}
+);
+
+export default ChartGraph;
