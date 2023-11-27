@@ -1,31 +1,43 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { ChartTypeRegistry } from "chart.js";
 import ChartGraph from "~/components/chart/chart";
 
 export default component$(() => {
-  const chartProps = {
-    labels: ["Label 1", "Label 2", "Label 3", "Label 4", "Label 5", "Label 6"],
+
+  interface ChartProps {
+    labels: string[];
+    label: string;
+    chartType: keyof ChartTypeRegistry;
+    data: number[]
+  }
+  
+  const chartProps = useSignal({
+    labels: ["Label", "Label", "Label", "Label", "Label", "Label"],
     label: "Chart Label",
     chartType: "bar" as keyof ChartTypeRegistry,
     data: [12, 19, 3, 5, 2, 3],
-  };
+  });
+
+  useVisibleTask$(async ()=>{
+    await fetch("test.json")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Erro na requisição: ${response.statusText}`
+          );
+        }
+        return response.json() as Promise<ChartProps>;
+      })
+      .then((response) => {
+        chartProps.value = response
+    });
+  })
   
   return (
     <>
-      <h1>Olá 👋</h1>
-      <h2>Aqui estão alguns exemplos para utilizar o chart.js:</h2>
-      <span>Este aqui é um gráfico de barras:</span>
-      <ChartGraph {...chartProps} />
-      <span>Já este, é um gráfico de pizza:</span>
-      <ChartGraph {...chartProps} chartType="line" />
-      <span>Você pode passar atributos do Chart.js por props, veja no código o exemplo:</span>
-      <ChartGraph {...chartProps} chartType="pie" datasets={{
-        backgroundColor: ["red", "blue", "green", "black", "cyan", "orange"],
-        hoverBorderColor: "yellow",
-        hoverBorderWidth: 5
-      }}
-      />
+      <ChartGraph {...chartProps.value} toTrack={chartProps} className="chart" />
+      <ChartGraph {...chartProps.value} chartType="bar" toTrack={chartProps} className="chart" />
     </>
   );
 });
